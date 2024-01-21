@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import com.proudlobster.stacks.Fallible;
 import com.proudlobster.stacks.TestContstants;
 import com.proudlobster.stacks.ecp.Component;
 import com.proudlobster.stacks.structure.Configuration;
@@ -54,8 +56,8 @@ public class JdbcConnectionProviderTest implements TestContstants {
 
     @BeforeEach
     public void deleteDatabase() throws IOException {
-        Files.walk(Paths.get(DB_NAME.value())).sorted(Comparator.reverseOrder()).map(Path::toFile)
-                .forEach(File::delete);
+        Optional.of(Paths.get(DB_NAME.value())).filter(Files::exists).map(p -> Fallible.attemptApply(Files::walk, p))
+                .orElseGet(Stream::empty).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
         PROVIDER = JdbcConnectionProvider.of(DICT);
     }
 
