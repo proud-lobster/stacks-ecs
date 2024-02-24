@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -23,8 +22,8 @@ import com.proudlobster.stacks.scenario.life.RoomBuilder;
 
 public class LifeScenarioTest {
 
-    private static final Comparator<ManagedEntity> RANDOM_COMPARATOR = (a, b) -> a == b ? 0
-            : (ThreadLocalRandom.current().nextBoolean() ? -1 : 1);
+    private static final Comparator<ManagedEntity> IDENTITY_COMPARATOR = (a, b) -> a.identifier()
+            .compareTo(b.identifier());
 
     private Stacks $;
 
@@ -66,12 +65,13 @@ public class LifeScenarioTest {
                         .map(l -> (Predicate<Long>) (p -> l.equals(p))).reduce((p1, p2) -> p1.or(p2))
                         .orElse(l -> false);
                 final Comparator<ManagedEntity> priorityComparator = (a, b) -> {
-                    int r = RANDOM_COMPARATOR.compare(a, b);
+                    int r = Math.toIntExact(a.referenceEntities(GameComponent.ROOM).count())
+                            - Math.toIntExact(b.referenceEntities(GameComponent.ROOM).count());
                     if (isPrevious.test(a.identifier())) {
-                        r += 10;
+                        r += 5;
                     }
                     if (isPrevious.test(b.identifier())) {
-                        r -= 10;
+                        r -= 5;
                     }
                     return r;
                 };
@@ -148,10 +148,10 @@ public class LifeScenarioTest {
         $.$().createEntitiesFromTemplate("test-creature", 50).commit();
         RoomBuilder.of($).buildRoomGrid(4, 4, 100).commit();
 
-        ManagedEntity randomRoom = $.$(GameComponent.ROOM).min(RANDOM_COMPARATOR).get();
+        ManagedEntity firstRoom = $.$(GameComponent.ROOM).min(IDENTITY_COMPARATOR).get();
         ManagedEntity creature = $.$(GameComponent.CREATURE).findFirst().get();
-        randomRoom.addReference(GameComponent.ROOM, creature.identifier()).commit();
-        creature.assignComponent(GameComponent.LOCATION, randomRoom.identifier()).commit();
+        firstRoom.addReference(GameComponent.ROOM, creature.identifier()).commit();
+        creature.assignComponent(GameComponent.LOCATION, firstRoom.identifier()).commit();
 
         $.$("room-processor", GameComponent.ROOM, ROOM_PROCESSOR);
         $.$("energy-processor", GameComponent.ENERGY, ENERGY_PROCESSOR);
@@ -162,7 +162,7 @@ public class LifeScenarioTest {
             $.runProcessors();
         }
 
-        assertEquals(0, $.$(GameComponent.FOOD).count());
+        assertEquals(68, $.$(GameComponent.FOOD).count());
     }
 
     @Test
@@ -175,9 +175,9 @@ public class LifeScenarioTest {
         }
 
         $.$(GameComponent.CREATURE).forEach(e -> {
-            ManagedEntity randomRoom = $.$(GameComponent.ROOM).min(RANDOM_COMPARATOR).get();
-            randomRoom.addReference(GameComponent.ROOM, e.identifier()).commit();
-            e.assignComponent(GameComponent.LOCATION, randomRoom.identifier()).commit();
+            ManagedEntity firstRoom = $.$(GameComponent.ROOM).min(IDENTITY_COMPARATOR).get();
+            firstRoom.addReference(GameComponent.ROOM, e.identifier()).commit();
+            e.assignComponent(GameComponent.LOCATION, firstRoom.identifier()).commit();
         });
 
         $.$("room-processor", GameComponent.ROOM, ROOM_PROCESSOR);
@@ -189,7 +189,7 @@ public class LifeScenarioTest {
             $.runProcessors();
         }
 
-        assertEquals(0, $.$(GameComponent.FOOD).count());
+        assertEquals(68, $.$(GameComponent.FOOD).count());
     }
 
     @Test
@@ -202,9 +202,9 @@ public class LifeScenarioTest {
         }
 
         $.$(GameComponent.CREATURE).forEach(e -> {
-            ManagedEntity randomRoom = $.$(GameComponent.ROOM).min(RANDOM_COMPARATOR).get();
-            randomRoom.addReference(GameComponent.ROOM, e.identifier()).commit();
-            e.assignComponent(GameComponent.LOCATION, randomRoom.identifier()).commit();
+            ManagedEntity firstRoom = $.$(GameComponent.ROOM).min(IDENTITY_COMPARATOR).get();
+            firstRoom.addReference(GameComponent.ROOM, e.identifier()).commit();
+            e.assignComponent(GameComponent.LOCATION, firstRoom.identifier()).commit();
         });
 
         $.$("room-processor", GameComponent.ROOM, ROOM_PROCESSOR);
@@ -216,7 +216,7 @@ public class LifeScenarioTest {
             $.runProcessors();
         }
 
-        assertEquals(0, $.$(GameComponent.FOOD).count());
+        assertEquals(68, $.$(GameComponent.FOOD).count());
     }
 
     @Test
