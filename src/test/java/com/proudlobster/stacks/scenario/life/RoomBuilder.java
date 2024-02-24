@@ -13,6 +13,8 @@ import com.proudlobster.stacks.ecp.ManagedTransaction;
 
 public interface RoomBuilder {
 
+    public static final Long SEED = 1l;
+
     public static RoomBuilder of(final Stacks s) {
         return () -> s;
     }
@@ -78,7 +80,7 @@ public interface RoomBuilder {
         }
 
         ManagedTransaction dropFood = $();
-        final Random r = new Random(System.currentTimeMillis());
+        final Random r = new Random(SEED);
         for (int i = 0; i < foodCount; i++) {
             final long room = rooms[r.nextInt(x)][r.nextInt(y)];
             final long foodId = nextId();
